@@ -1,27 +1,17 @@
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include "gran_entero.h"
 
-typedef struct Nodo {
-    int digito;
-    struct Nodo *sig;
-} Nodo;
-
-typedef struct {
-    Nodo *inicio;
-    int signo;     // 1 positivo, -1 negativo
-    int cantidad;
-} GranEntero;
-
-// Función auxiliar para crear un nodo
-Nodo* crearNodo(int digito) {
+// Función auxiliar para crear un nodo con un dígito
+static Nodo* crearNodo(int digito) {
     Nodo* nuevo = (Nodo*)malloc(sizeof(Nodo));
     nuevo->digito = digito;
     nuevo->sig = NULL;
     return nuevo;
 }
 
+// Convierte un string a GranEntero
 GranEntero* creaGranEnteroDesdeStr(char *numero) {
     if (numero == NULL || *numero == '\0') return NULL;
 
@@ -30,7 +20,8 @@ GranEntero* creaGranEnteroDesdeStr(char *numero) {
     nuevo->cantidad = 0;
 
     int i = 0;
-    // Signo
+
+    // Determinar signo
     if (numero[0] == '-') {
         nuevo->signo = -1;
         i++;
@@ -42,7 +33,7 @@ GranEntero* creaGranEnteroDesdeStr(char *numero) {
     // Saltar ceros iniciales
     while (numero[i] == '0') i++;
 
-    // Si todo eran ceros, agregar solo un nodo con 0
+    // Si todo era cero
     if (numero[i] == '\0') {
         Nodo *nodo = crearNodo(0);
         nuevo->inicio = nodo;
@@ -50,11 +41,9 @@ GranEntero* creaGranEnteroDesdeStr(char *numero) {
         return nuevo;
     }
 
-    // Agregar dígitos a la lista
     Nodo *ultimo = NULL;
     for (; numero[i] != '\0'; i++) {
         if (!isdigit(numero[i])) {
-            // Manejo de error: carácter no válido
             free(nuevo);
             return NULL;
         }
@@ -71,4 +60,43 @@ GranEntero* creaGranEnteroDesdeStr(char *numero) {
     }
 
     return nuevo;
+}
+
+// Convierte GranEntero a string
+char* creaStrDesdeGranEntero(GranEntero *numero) {
+    if (numero == NULL || numero->inicio == NULL) return NULL;
+
+    int len = numero->cantidad + 1; // +1 para '\0'
+    if (numero->signo == -1)
+        len++; // para el '-'
+
+    char *str = (char*)malloc(len * sizeof(char));
+    if (!str) return NULL;
+
+    char *ptr = str;
+
+    if (numero->signo == -1)
+        *ptr++ = '-';
+
+    Nodo *actual = numero->inicio;
+    while (actual) {
+        *ptr++ = actual->digito + '0';
+        actual = actual->sig;
+    }
+
+    *ptr = '\0';
+    return str;
+}
+
+// Libera memoria de un GranEntero
+void eliminaGranEntero(GranEntero *numero) {
+    if (!numero) return;
+
+    Nodo *actual = numero->inicio;
+    while (actual) {
+        Nodo *temp = actual;
+        actual = actual->sig;
+        free(temp);
+    }
+    free(numero);
 }
